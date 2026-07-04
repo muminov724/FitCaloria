@@ -55,8 +55,106 @@ if not TELEGRAM_BOT_TOKEN or not GEMINI_API_KEY:
     print("=" * 80 + "\n")
     exit(1)
 
+# Localization texts
+TEXTS = {
+    'ru': {
+        'start_welcome': "Привет, {name}! 🍎\n\nЯ персональный ИИ-диетолог. Чтобы я мог рассчитывать вашу норму калорий и давать рекомендации, пожалуйста, заполните профиль.",
+        'ask_lang': "Выберите язык / Tilni tanlang:",
+        'ask_age': "Сколько вам лет? (Введите число):",
+        'err_age_digit': "Пожалуйста, введите ваш возраст числом (например, 25):",
+        'err_age_range': "Пожалуйста, введите реальный возраст (от 5 до 120 лет):",
+        'ask_height': "Отлично! Какой у вас рост в сантиметрах? (Введите число):",
+        'err_height_digit': "Пожалуйста, введите рост целым числом в см (например, 175):",
+        'err_height_range': "Пожалуйста, введите реальный рост (от 50 до 250 см):",
+        'ask_weight': "Какой у вас вес в килограммах? (Введите число):",
+        'err_weight_digit': "Пожалуйста, введите вес числом в кг (например, 70 или 65.5):",
+        'err_weight_range': "Пожалуйста, введите реальный вес (от 10 до 300 кг):",
+        'ask_gender': "Выберите ваш пол:",
+        'gender_male': "Мужской ♂️",
+        'gender_female': "Женский ♀️",
+        'ask_activity': "Выберите уровень физической активности:",
+        'act_sedentary': "Минимальная (сидячий образ жизни) 🛋️",
+        'act_light': "Легкая (тренировки 1-3 раза в неделю) 🚶",
+        'act_moderate': "Средняя (тренировки 3-5 раз в неделю) 🏃",
+        'act_active': "Высокая (тяжелые тренировки каждый день) 🏋️",
+        'ask_goal': "Какая ваша основная цель?",
+        'goal_lose': "Сбросить вес 📉",
+        'goal_maintain': "Поддерживать вес ⚖️",
+        'goal_gain': "Набрать вес 📈",
+        'profile_saved': "🎉 **Профиль сохранен!**\n\n• Пол: {gender}\n• Возраст: {age} лет\n• Рост: {height} см\n• Вес: {weight} кг\n• Активность: {activity}\n• Цель: {goal}\n\n🎯 **Ваша суточная норма:**\n• Калории: **{target_calories} ккал**\n• Белки: **{target_protein} г**\n• Жиры: **{target_fat} г**\n• Углеводы: **{target_carbs} г**\n\nТеперь вы можете отправить мне **фотографии еды** или **написать текстом**, что вы съели, и я буду вести ваш дневник питания!",
+        'cancel': "Заполнение профиля отменено. Вы можете начать заново с помощью команды /start.",
+        'remind_buttons': "Пожалуйста, выберите один из вариантов, нажав на кнопку под сообщением. 👆",
+        'help': "Я помогу вам контролировать питание:\n1. Заполните профиль с помощью команды /start.\n2. Отправьте фото еды в чат или напишите текстом, что съели.\n3. Я определю продукты, посчитаю КБЖУ, предложу добавить в дневник и дам совет.\n\n🔍 **Доступные команды:**\n/start — Сбросить профиль или ввести новые данные\n/today — Посмотреть съеденное за день\n/history — Статистика за последние 7 дней\n/help — Показать эту справку",
+        'analyzing_photo': "Секунду, анализирую изображение... 🔍",
+        'analyzing_text': "Секунду, анализирую описание еды... 📝",
+        'profile_missing': "Для анализа сначала заполните ваш профиль. Введите команду /start, чтобы начать.",
+        'err_api': "Произошла ошибка при обращении к ИИ API. Пожалуйста, попробуйте еще раз позже. 😢",
+        'err_unexpected': "Не удалось обработать еду или произошла ошибка. Пожалуйста, попробуйте еще раз. 🛠",
+        'confirm_log': "Записать это блюдо в ваш дневник питания?",
+        'btn_yes': "Да, записать ✍️",
+        'btn_no': "Нет, не надо ❌",
+        'meal_logged': "✅ Блюдо **{dish}** ({calories} ккал) успешно записано в ваш дневник питания за сегодня!",
+        'meal_cancelled': "❌ Запись отменена.",
+        'limit_reached': "⚠️ **Внимание!** Вы достигли вашей суточной нормы калорий ({target} ккал)!\nВсего съедено за сегодня: {total} ккал.",
+        'today_title': "📅 **Дневник питания за сегодня:**\n\n",
+        'today_empty': "Вы еще ничего не добавили за сегодня. 🍽️\n\n",
+        'today_meals_header': "**Приемы пищи:**\n",
+        'today_summary': "📊 **Итого за день:**\n🔥 Калории: **{total_cal}** / {target_cal} ккал\n[{bar}] {percent}%\n\n🍗 Белки: **{total_prot:.1f}** / {target_prot:.1f} г\n🥑 Жиры: **{total_fat:.1f}** / {target_fat:.1f} г\n🍞 Углеводы: **{total_carb:.1f}** / {target_carb:.1f} г",
+        'history_title': "📈 **История питания за последние 7 дней:**\n\n",
+        'history_empty': "История питания пуста. Начните добавлять еду! 🥗",
+        'history_item': "📅 **{date}**\n• Калории: {calories} ккал\n• БЖУ: Б: {protein:.1f}г | Ж: {fat:.1f}г | У: {carbs:.1f}г\n\n",
+    },
+    'uz': {
+        'start_welcome': "Salom, {name}! 🍎\n\nYeyotgan ovqatlaringiz tahlilini qilish va kunlik kaloriya me'yoringizni hisoblashim uchun, iltimos, profilingizni to'ldiring.",
+        'ask_lang': "Языкни танланг / Tilni tanlang:",
+        'ask_age': "Yoshingiz nechada? (Son kiriting):",
+        'err_age_digit': "Iltimos, yoshingizni son bilan kiriting (masalan, 25):",
+        'err_age_range': "Iltimos, haqiqiy yoshni kiriting (5 dan 120 yoshgacha):",
+        'ask_height': "Ajoyib! Bo'yingiz necha santimetr? (Son kiriting):",
+        'err_height_digit': "Iltimos, bo'yingizni sm da butun son bilan kiriting (masalan, 175):",
+        'err_height_range': "Iltimos, haqiqiy bo'yni kiriting (50 dan 250 sm gacha):",
+        'ask_weight': "Vazningiz necha kilogramm? (Son kiriting):",
+        'err_weight_digit': "Iltimos, vazningizni kg da kiriting (masalan, 70 yoki 65.5):",
+        'err_weight_range': "Iltimos, haqiqiy vaznni kiriting (10 dan 300 kg gacha):",
+        'ask_gender': "Jinsingizni tanlang:",
+        'gender_male': "Erkak ♂️",
+        'gender_female': "Ayol ♀️",
+        'ask_activity': "Jismoniy faollik darajasini tanlang:",
+        'act_sedentary': "Minimal (kam harakatli hayot tarzi) 🛋️",
+        'act_light': "Yengil (haftada 1-3 marta mashg'ulot) 🚶",
+        'act_moderate': "O'rtacha (haftada 3-5 marta mashg'ulot) 🏃",
+        'act_active': "Yuqori (har kuni og'ir mashg'ulotlar) 🏋️",
+        'ask_goal': "Asosiy maqsadingiz nima?",
+        'goal_lose': "Vazn yo'qotish 📉",
+        'goal_maintain': "Vaznni saqlash ⚖️",
+        'goal_gain': "Vazn yig'ish 📈",
+        'profile_saved': "🎉 **Profil saqlandi!**\n\n• Jinsi: {gender}\n• Yoshi: {age} yosh\n• Bo'yi: {height} sm\n• Vazni: {weight} kg\n• Faollik: {activity}\n• Maqsad: {goal}\n\n🎯 **Sizning kunlik me'yoringiz:**\n• Kaloriya: **{target_calories} kkal**\n• Oqsillar: **{target_protein} g**\n• Yog'lar: **{target_fat} g**\n• Uglevodlar: **{target_carbs} g**\n\nEndi menga **taom rasmini** yuborishingiz yoki nima yeganingizni **yozma ravishda** yuborishingiz mumkin. Men uni kundalikka yozib boraman!",
+        'cancel': "Profil to'ldirish bekor qilindi. /start buyrug'i orqali qaytadan boshlashingiz mumkin.",
+        'remind_buttons': "Iltimos, xabar ostidagi tugmalardan birini tanlang. 👆",
+        'help': "Men sizga ovqatlanishni nazorat qilishda yordam beraman:\n1. /start buyrug'i orqali profilni to'ldiring.\n2. Taom rasmini yuboring yoki nima yeganingizni yozib yuboring.\n3. Men taomni aniqlayman, KBJU hisoblayman va kundalikka yozishni taklif qilaman.\n\n🔍 **Mavjud buyruqlar:**\n/start — Profilni qayta sozlash\n/today — Bugungi yeyilgan taomlar\n/history — Oxirgi 7 kunlik statistika\n/help — Ushbu yordam oynasi",
+        'analyzing_photo': "Bir soniya, rasmni tahlil qilyapman... 🔍",
+        'analyzing_text': "Bir soniya, taom tavsifini tahlil qilyapman... 📝",
+        'profile_missing': "Tahlil qilish uchun avval profilingizni to'ldiring. Boshlash uchun /start buyrug'ini bosing.",
+        'err_api': "AI API bilan bog'lanishda xatolik yuz berdi. Iltimos, keyinroq qayta urinib ko'ring. 😢",
+        'err_unexpected': "Rasm yoki tavsifni tahlil qilib bo'lmadi. Iltimos, qayta urinib ko'ring. 🛠",
+        'confirm_log': "Ushbu taomni kunlik kundalikka yozib qo'yaymi?",
+        'btn_yes': "Ha, yozish ✍️",
+        'btn_no': "Yo'q, kerak emas ❌",
+        'meal_logged': "✅ **{dish}** ({calories} kkal) taomi bugungi kunlik kundaligingizga muvaffaqiyatli yozildi!",
+        'meal_cancelled': "❌ Yozib qo'yish bekor qilindi.",
+        'limit_reached': "⚠️ **Diqqat!** Siz kunlik kaloriya me'yoringizga yetdingiz ({target} kkal)!\nBugun yeyilgan jami kaloriya: {total} kkal.",
+        'today_title': "📅 **Bugungi yeyilgan taomlar kundaligi:**\n\n",
+        'today_empty': "Bugun hali hech narsa kiritmadingiz. 🍽️\n\n",
+        'today_meals_header': "**Taomlar ro'yxati:**\n",
+        'today_summary': "📊 **Kunlik natija:**\n🔥 Kaloriya: **{total_cal}** / {target_cal} kkal\n[{bar}] {percent}%\n\n🍗 Oqsillar: **{total_prot:.1f}** / {target_prot:.1f} g\n🥑 Yog'lar: **{total_fat:.1f}** / {target_fat:.1f} g\n🍞 Uglevodlar: **{total_carb:.1f}** / {target_carb:.1f} g",
+        'history_title': "📈 **Oxirgi 7 kunlik statistika:**\n\n",
+        'history_empty': "Tarix bo'sh. Taomlarni kiritishni boshlang! 🥗",
+        'history_item': "📅 **{date}**\n• Kaloriya: {calories} kkal\n• OYU: Oqsillar: {protein:.1f}g | Yog'lar: {fat:.1f}g | Uglevodlar: {carbs:.1f}g\n\n",
+    }
+}
+
 # Conversation states for profile setup
-AGE, HEIGHT, WEIGHT, GENDER, ACTIVITY, GOAL = range(6)
+LANG, AGE, HEIGHT, WEIGHT, GENDER, ACTIVITY, GOAL = range(7)
 
 # Global database pool reference
 db_pool = None
@@ -87,6 +185,7 @@ async def post_init(application: Application) -> None:
                     height INT NOT NULL,
                     weight REAL NOT NULL,
                     gender VARCHAR(10),
+                    language VARCHAR(10),
                     activity VARCHAR(20),
                     goal VARCHAR(20),
                     target_calories INT,
@@ -99,6 +198,7 @@ async def post_init(application: Application) -> None:
             )
             # Safe migration queries for existing users
             await conn.execute("ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS gender VARCHAR(10);")
+            await conn.execute("ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS language VARCHAR(10);")
             await conn.execute("ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS activity VARCHAR(20);")
             await conn.execute("ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS goal VARCHAR(20);")
             await conn.execute("ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS target_calories INT;")
@@ -144,7 +244,7 @@ async def get_user_profile(user_id: int) -> dict | None:
             async with db_pool.acquire() as conn:
                 row = await conn.fetchrow(
                     """
-                    SELECT age, height, weight, gender, activity, goal,
+                    SELECT age, height, weight, gender, language, activity, goal,
                            target_calories, target_protein, target_fat, target_carbs
                     FROM user_profiles WHERE user_id = $1
                     """,
@@ -156,6 +256,7 @@ async def get_user_profile(user_id: int) -> dict | None:
                         'height': row['height'],
                         'weight': row['weight'],
                         'gender': row['gender'],
+                        'language': row['language'],
                         'activity': row['activity'],
                         'goal': row['goal'],
                         'target_calories': row['target_calories'],
@@ -170,7 +271,7 @@ async def get_user_profile(user_id: int) -> dict | None:
 
 async def save_user_profile(
     user_id: int, age: int, height: int, weight: float,
-    gender: str, activity: str, goal: str,
+    gender: str, language: str, activity: str, goal: str,
     target_calories: int, target_protein: float, target_fat: float, target_carbs: float
 ) -> bool:
     """Save user profile to the database if active, otherwise return False."""
@@ -181,16 +282,17 @@ async def save_user_profile(
                 await conn.execute(
                     """
                     INSERT INTO user_profiles (
-                        user_id, age, height, weight, gender, activity, goal,
+                        user_id, age, height, weight, gender, language, activity, goal,
                         target_calories, target_protein, target_fat, target_carbs, updated_at
                     )
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, CURRENT_TIMESTAMP)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, CURRENT_TIMESTAMP)
                     ON CONFLICT (user_id)
                     DO UPDATE SET 
                         age = EXCLUDED.age, 
                         height = EXCLUDED.height, 
                         weight = EXCLUDED.weight,
                         gender = EXCLUDED.gender,
+                        language = EXCLUDED.language,
                         activity = EXCLUDED.activity,
                         goal = EXCLUDED.goal,
                         target_calories = EXCLUDED.target_calories,
@@ -199,7 +301,7 @@ async def save_user_profile(
                         target_carbs = EXCLUDED.target_carbs,
                         updated_at = CURRENT_TIMESTAMP
                     """,
-                    user_id, age, height, weight, gender, activity, goal,
+                    user_id, age, height, weight, gender, language, activity, goal,
                     target_calories, target_protein, target_fat, target_carbs
                 )
             logger.info(f"User profile saved to database for user {user_id}")
@@ -309,6 +411,7 @@ async def get_user_profile_data(user_id: int, context: ContextTypes.DEFAULT_TYPE
             'height': context.user_data.get('height'),
             'weight': context.user_data.get('weight'),
             'gender': context.user_data.get('gender'),
+            'language': context.user_data.get('language', 'ru'),
             'activity': context.user_data.get('activity'),
             'goal': context.user_data.get('goal'),
             'target_calories': context.user_data.get('target_calories'),
@@ -360,74 +463,97 @@ async def log_meal_data(
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """Starts the conversation and asks for the user's age."""
-    user = update.effective_user
+    """Starts the conversation and asks for the user's language preference."""
+    keyboard = [
+        [
+            InlineKeyboardButton("Русский 🇷🇺", callback_data="lang_ru"),
+            InlineKeyboardButton("O'zbekcha 🇺🇿", callback_data="lang_uz")
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text(
-        f"Привет, {user.first_name}! 🍎\n\n"
-        "Я персональный ИИ-диетолог. Чтобы я мог рассчитывать вашу норму калорий и давать "
-        "рекомендации, пожалуйста, заполните профиль.\n\n"
-        "Сколько вам лет? (Введите число):"
+        "Выберите язык / Tilni tanlang:",
+        reply_markup=reply_markup
     )
+    return LANG
+
+
+async def get_language(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Store selected language and ask for age."""
+    query = update.callback_query
+    await query.answer()
+    
+    lang = "ru" if query.data == "lang_ru" else "uz"
+    context.user_data['language'] = lang
+    
+    user = update.effective_user
+    welcome = TEXTS[lang]['start_welcome'].format(name=user.first_name)
+    age_prompt = TEXTS[lang]['ask_age']
+    
+    await query.message.edit_text(f"{welcome}\n\n{age_prompt}")
     return AGE
 
 
 async def get_age(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Store age and ask for height."""
+    lang = context.user_data.get('language', 'ru')
     text = update.message.text.strip()
     if not text.isdigit():
-        await update.message.reply_text("Пожалуйста, введите ваш возраст числом (например, 25):")
+        await update.message.reply_text(TEXTS[lang]['err_age_digit'])
         return AGE
         
     age = int(text)
     if age < 5 or age > 120:
-        await update.message.reply_text("Пожалуйста, введите реальный возраст (от 5 до 120 лет):")
+        await update.message.reply_text(TEXTS[lang]['err_age_range'])
         return AGE
 
     context.user_data['age'] = age
-    await update.message.reply_text("Отлично! Какой у вас рост в сантиметрах? (Введите число):")
+    await update.message.reply_text(TEXTS[lang]['ask_height'])
     return HEIGHT
 
 
 async def get_height(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Store height and ask for weight."""
+    lang = context.user_data.get('language', 'ru')
     text = update.message.text.strip()
     if not text.isdigit():
-        await update.message.reply_text("Пожалуйста, введите рост целым числом в см (например, 175):")
+        await update.message.reply_text(TEXTS[lang]['err_height_digit'])
         return HEIGHT
         
     height = int(text)
     if height < 50 or height > 250:
-        await update.message.reply_text("Пожалуйста, введите реальный рост (от 50 до 250 см):")
+        await update.message.reply_text(TEXTS[lang]['err_height_range'])
         return HEIGHT
 
     context.user_data['height'] = height
-    await update.message.reply_text("Какой у вас вес в килограммах? (Введите число):")
+    await update.message.reply_text(TEXTS[lang]['ask_weight'])
     return WEIGHT
 
 
 async def get_weight(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Store weight and ask for gender."""
+    lang = context.user_data.get('language', 'ru')
     text = update.message.text.strip()
     try:
         weight = float(text.replace(',', '.'))
     except ValueError:
-        await update.message.reply_text("Пожалуйста, введите вес числом в кг (например, 70 или 65.5):")
+        await update.message.reply_text(TEXTS[lang]['err_weight_digit'])
         return WEIGHT
         
     if weight < 10 or weight > 300:
-        await update.message.reply_text("Пожалуйста, введите реальный вес (от 10 до 300 кг):")
+        await update.message.reply_text(TEXTS[lang]['err_weight_range'])
         return WEIGHT
 
     context.user_data['weight'] = weight
     
     keyboard = [
         [
-            InlineKeyboardButton("Мужской ♂️", callback_data="male"),
-            InlineKeyboardButton("Женский ♀️", callback_data="female")
+            InlineKeyboardButton(TEXTS[lang]['gender_male'], callback_data="male"),
+            InlineKeyboardButton(TEXTS[lang]['gender_female'], callback_data="female")
         ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text("Выберите ваш пол:", reply_markup=reply_markup)
+    await update.message.reply_text(TEXTS[lang]['ask_gender'], reply_markup=reply_markup)
     return GENDER
 
 
@@ -438,14 +564,16 @@ async def get_gender(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     gender = query.data
     context.user_data['gender'] = gender
     
+    lang = context.user_data.get('language', 'ru')
+    
     keyboard = [
-        [InlineKeyboardButton("Минимальная (сидячий образ жизни) 🛋️", callback_data="sedentary")],
-        [InlineKeyboardButton("Легкая (тренировки 1-3 раза в неделю) 🚶", callback_data="light")],
-        [InlineKeyboardButton("Средняя (тренировки 3-5 раз в неделю) 🏃", callback_data="moderate")],
-        [InlineKeyboardButton("Высокая (тяжелые тренировки каждый день) 🏋️", callback_data="active")]
+        [InlineKeyboardButton(TEXTS[lang]['act_sedentary'], callback_data="sedentary")],
+        [InlineKeyboardButton(TEXTS[lang]['act_light'], callback_data="light")],
+        [InlineKeyboardButton(TEXTS[lang]['act_moderate'], callback_data="moderate")],
+        [InlineKeyboardButton(TEXTS[lang]['act_active'], callback_data="active")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await query.message.edit_text("Выберите уровень физической активности:", reply_markup=reply_markup)
+    await query.message.edit_text(TEXTS[lang]['ask_activity'], reply_markup=reply_markup)
     return ACTIVITY
 
 
@@ -456,13 +584,15 @@ async def get_activity(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     activity = query.data
     context.user_data['activity'] = activity
     
+    lang = context.user_data.get('language', 'ru')
+    
     keyboard = [
-        [InlineKeyboardButton("Сбросить вес 📉", callback_data="lose")],
-        [InlineKeyboardButton("Поддерживать вес ⚖️", callback_data="maintain")],
-        [InlineKeyboardButton("Набрать вес 📈", callback_data="gain")]
+        [InlineKeyboardButton(TEXTS[lang]['goal_lose'], callback_data="lose")],
+        [InlineKeyboardButton(TEXTS[lang]['goal_maintain'], callback_data="maintain")],
+        [InlineKeyboardButton(TEXTS[lang]['goal_gain'], callback_data="gain")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await query.message.edit_text("Какая ваша основная цель?", reply_markup=reply_markup)
+    await query.message.edit_text(TEXTS[lang]['ask_goal'], reply_markup=reply_markup)
     return GOAL
 
 
@@ -472,6 +602,8 @@ async def get_goal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await query.answer()
     goal = query.data
     context.user_data['goal'] = goal
+    
+    lang = context.user_data.get('language', 'ru')
     
     age = context.user_data['age']
     height = context.user_data['height']
@@ -526,38 +658,34 @@ async def get_goal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     
     # Save to database
     await save_user_profile(
-        user_id, age, height, weight, gender, activity, goal,
+        user_id, age, height, weight, gender, lang, activity, goal,
         target_calories, target_protein, target_fat, target_carbs
     )
     
-    gender_text = "Мужской ♂️" if gender == "male" else "Женский ♀️"
+    gender_text = TEXTS[lang]['gender_male'] if gender == "male" else TEXTS[lang]['gender_female']
     activity_text = {
-        "sedentary": "Минимальная 🛋️",
-        "light": "Легкая 🚶",
-        "moderate": "Средняя 🏃",
-        "active": "Высокая 🏋️"
+        "sedentary": TEXTS[lang]['act_sedentary'],
+        "light": TEXTS[lang]['act_light'],
+        "moderate": TEXTS[lang]['act_moderate'],
+        "active": TEXTS[lang]['act_active']
     }.get(activity)
     goal_text = {
-        "lose": "Сбросить вес 📉",
-        "maintain": "Поддерживать вес ⚖️",
-        "gain": "Набрать вес 📈"
+        "lose": TEXTS[lang]['goal_lose'],
+        "maintain": TEXTS[lang]['goal_maintain'],
+        "gain": TEXTS[lang]['goal_gain']
     }.get(goal)
     
-    summary = (
-        "🎉 **Профиль сохранен!**\n\n"
-        f"• Пол: {gender_text}\n"
-        f"• Возраст: {age} лет\n"
-        f"• Рост: {height} см\n"
-        f"• Вес: {weight} кг\n"
-        f"• Активность: {activity_text}\n"
-        f"• Цель: {goal_text}\n\n"
-        f"🎯 **Ваша суточная норма:**\n"
-        f"• Калории: **{target_calories} ккал**\n"
-        f"• Белки: **{target_protein} г**\n"
-        f"• Жиры: **{target_fat} г**\n"
-        f"• Углеводы: **{target_carbs} г**\n\n"
-        "Теперь вы можете отправить мне **фотографии еды** или **написать текстом**, что вы съели, "
-        "и я буду вести ваш дневник питания!"
+    summary = TEXTS[lang]['profile_saved'].format(
+        gender=gender_text,
+        age=age,
+        height=height,
+        weight=weight,
+        activity=activity_text,
+        goal=goal_text,
+        target_calories=target_calories,
+        target_protein=target_protein,
+        target_fat=target_fat,
+        target_carbs=target_carbs
     )
     await query.message.edit_text(summary, parse_mode="Markdown")
     return ConversationHandler.END
@@ -565,32 +693,24 @@ async def get_goal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Cancel the profile filling conversation."""
+    lang = context.user_data.get('language', 'ru')
     msg = update.message if update.message else update.callback_query.message
-    await msg.reply_text(
-        "Заполнение профиля отменено. Вы можете начать заново с помощью команды /start."
-    )
+    await msg.reply_text(TEXTS[lang]['cancel'])
     return ConversationHandler.END
 
 
 async def remind_click_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Reminder to click inline buttons."""
-    await update.message.reply_text("Пожалуйста, выберите один из вариантов, нажав на кнопку под сообщением. 👆")
+    lang = context.user_data.get('language', 'ru')
+    await update.message.reply_text(TEXTS[lang]['remind_buttons'])
 
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Send a message when the command /help is issued."""
-    help_text = (
-        "Я помогу вам контролировать питание:\n"
-        "1. Заполните профиль с помощью команды /start.\n"
-        "2. Отправьте фото еды в чат или напишите текстом, что съели (например: 'съел яблоко и овсянку').\n"
-        "3. Я определю продукты, посчитаю КБЖУ, добавлю в дневник и дам совет.\n\n"
-        "🔍 **Доступные команды:**\n"
-        "/start — Сбросить профиль или ввести новые данные\n"
-        "/today — Посмотреть съеденное за день и оставшиеся калории\n"
-        "/history — Статистика за последние 7 дней\n"
-        "/help — Показать эту справку"
-    )
-    await update.message.reply_text(help_text)
+    user_id = update.effective_user.id
+    profile = await get_user_profile_data(user_id, context)
+    lang = profile.get('language', 'ru') if profile else context.user_data.get('language', 'ru')
+    await update.message.reply_text(TEXTS[lang]['help'])
 
 
 async def today_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -599,12 +719,11 @@ async def today_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     profile = await get_user_profile_data(user_id, context)
     
     if not profile:
-        await update.message.reply_text(
-            "Для просмотра дневника сначала заполните ваш профиль.\n"
-            "Пожалуйста, введите команду /start, чтобы начать."
-        )
+        lang = context.user_data.get('language', 'ru')
+        await update.message.reply_text(TEXTS[lang]['profile_missing'])
         return
         
+    lang = profile.get('language', 'ru')
     meals = await get_today_meals_data(user_id, context)
     
     target_cal = profile['target_calories']
@@ -617,29 +736,31 @@ async def today_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     total_fat = sum(m['fat'] for m in meals)
     total_carb = sum(m['carbs'] for m in meals)
     
-    percent = (total_cal / target_cal) if target_cal > 0 else 0
-    filled = min(10, int(percent * 10))
+    percent = int((total_cal / target_cal) * 100) if target_cal > 0 else 0
+    filled = min(10, int((total_cal / target_cal) * 10)) if target_cal > 0 else 0
     bar = "🟩" * filled + "⬜" * (10 - filled)
     
-    report = (
-        f"📅 **Дневник питания за сегодня:**\n\n"
-    )
+    report = TEXTS[lang]['today_title']
     
     if not meals:
-        report += "Вы еще ничего не добавили за сегодня. 🍽️\n\n"
+        report += TEXTS[lang]['today_empty']
     else:
-        report += "**Приемы пищи:**\n"
+        report += TEXTS[lang]['today_meals_header']
         for i, m in enumerate(meals, 1):
             report += f"{i}. {m['food_name']} — {m['calories']} ккал (Б: {m['protein']:.1f}г, Ж: {m['fat']:.1f}г, У: {m['carbs']:.1f}г)\n"
         report += "\n"
         
-    report += (
-        f"📊 **Итого за день:**\n"
-        f"🔥 Калории: **{total_cal}** / {target_cal} ккал\n"
-        f"[{bar}] {int(percent * 100)}%\n\n"
-        f"🍗 Белки: **{total_prot:.1f}** / {target_prot:.1f} г\n"
-        f"🥑 Жиры: **{total_fat:.1f}** / {target_fat:.1f} г\n"
-        f"🍞 Углеводы: **{total_carb:.1f}** / {target_carb:.1f} г\n"
+    report += TEXTS[lang]['today_summary'].format(
+        total_cal=total_cal,
+        target_cal=target_cal,
+        bar=bar,
+        percent=percent,
+        total_prot=total_prot,
+        target_prot=target_prot,
+        total_fat=total_fat,
+        target_fat=target_fat,
+        total_carb=total_carb,
+        target_carb=target_carb
     )
     
     await update.message.reply_text(report, parse_mode="Markdown")
@@ -651,12 +772,11 @@ async def history_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     profile = await get_user_profile_data(user_id, context)
     
     if not profile:
-        await update.message.reply_text(
-            "Для просмотра истории сначала заполните ваш профиль.\n"
-            "Пожалуйста, введите команду /start, чтобы начать."
-        )
+        lang = context.user_data.get('language', 'ru')
+        await update.message.reply_text(TEXTS[lang]['profile_missing'])
         return
         
+    lang = profile.get('language', 'ru')
     history = await get_history_summary(user_id, days=7)
     
     if not history:
@@ -690,16 +810,18 @@ async def history_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         ]
         
     if not history:
-        await update.message.reply_text("История питания пуста. Начните добавлять еду! 🥗")
+        await update.message.reply_text(TEXTS[lang]['history_empty'])
         return
         
-    report = "📈 **История питания за последние 7 дней:**\n\n"
+    report = TEXTS[lang]['history_title']
     for h in history:
         d_str = h['date'].strftime('%d.%m.%Y') if hasattr(h['date'], 'strftime') else str(h['date'])
-        report += (
-            f"📅 **{d_str}**\n"
-            f"• Калории: {h['calories']} ккал\n"
-            f"• БЖУ: Б: {h['protein']:.1f}г | Ж: {h['fat']:.1f}г | У: {h['carbs']:.1f}г\n\n"
+        report += TEXTS[lang]['history_item'].format(
+            date=d_str,
+            calories=h['calories'],
+            protein=h['protein'],
+            fat=h['fat'],
+            carbs=h['carbs']
         )
         
     await update.message.reply_text(report, parse_mode="Markdown")
@@ -707,13 +829,13 @@ async def history_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
 # Pydantic model for Structured Outputs
 class FoodAnalysis(BaseModel):
-    dish_name: str = Field(description="Название блюда или продуктов на русском языке")
+    dish_name: str = Field(description="Название блюда или продуктов на указанном языке")
     estimated_weight_g: int = Field(description="Примерный вес порции в граммах")
     calories: int = Field(description="Количество калорий в порции (ккал)")
     protein: float = Field(description="Количество белков в порции (граммов)")
     fat: float = Field(description="Количество жиров в порции (граммов)")
     carbs: float = Field(description="Количество углеводов в порции (граммов)")
-    nutritionist_review: str = Field(description="Отзыв диетолога на русском языке. Будь кратким, дружелюбным и дай практические советы: подходит ли блюдо пользователю с учетом его параметров, целей и дневной нормы калорий.")
+    nutritionist_review: str = Field(description="Отзыв диетолога на указанном языке. Будь кратким, дружелюбным и дай практические советы: подходит ли блюдо пользователю с учетом его параметров, целей и дневной нормы калорий.")
 
 
 async def analyze_food(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -722,19 +844,18 @@ async def analyze_food(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     profile = await get_user_profile_data(user_id, context)
     
     if not profile:
-        await update.message.reply_text(
-            "Для анализа еды сначала заполните ваш профиль (возраст, рост, вес, пол, активность, цель).\n"
-            "Пожалуйста, введите команду /start, чтобы начать."
-        )
+        lang = context.user_data.get('language', 'ru')
+        await update.message.reply_text(TEXTS[lang]['profile_missing'])
         return
 
+    lang = profile.get('language', 'ru')
     age = profile['age']
     height = profile['height']
     weight = profile['weight']
     gender = profile.get('gender', 'male')
     goal = profile.get('goal', 'maintain')
 
-    status_message = await update.message.reply_text("Секунду, анализирую изображение... 🔍")
+    status_message = await update.message.reply_text(TEXTS[lang]['analyzing_photo'])
     
     try:
         # Get the largest version of the photo
@@ -755,11 +876,14 @@ async def analyze_food(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         consumed_fat = sum(m['fat'] for m in meals_today)
         consumed_carbs = sum(m['carbs'] for m in meals_today)
         
+        # Set temperature to 0.0 for deterministic food and weight estimation
         config = GenerateContentConfig(
             response_mime_type="application/json",
             response_schema=FoodAnalysis,
-            temperature=0.2,
+            temperature=0.0,
         )
+        
+        target_lang_str = "русском языке" if lang == 'ru' else "узбекском языке (o'zbek tilida)"
         
         prompt = (
             "Вы профессиональный диетолог.\n"
@@ -768,8 +892,13 @@ async def analyze_food(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             f"белки {profile.get('target_protein')} г, жиры {profile.get('target_fat')} г, углеводы {profile.get('target_carbs')} г.\n"
             f"Уже съедено сегодня: калории {consumed_calories} ккал, "
             f"белки {consumed_protein:.1f} г, жиры {consumed_fat:.1f} г, углеводы {consumed_carbs:.1f} г.\n\n"
-            "Твоя задача — проанализировать прикрепленное фото еды, рассчитать КБЖУ порции и написать отзыв диетолога (поле nutritionist_review) на русском языке.\n"
-            "В nutritionist_review напиши коротко и по делу: как это вписывается в дневной лимит, подходит ли для цели пользователя, и дай совет."
+            "Твоя задача — проанализировать прикрепленное фото еды, рассчитать КБЖУ порции и написать отзыв диетолога (поле nutritionist_review).\n"
+            f"Всё текстовое описание (dish_name и nutritionist_review) должно быть написано СТРОГО на {target_lang_str}.\n"
+            "В nutritionist_review напиши коротко и по делу: как это вписывается в дневной лимит, подходит ли для цели пользователя, и дай практический совет.\n\n"
+            "ВАЖНОЕ ТРЕБОВАНИЕ К ОЦЕНКЕ ВЕСА:\n"
+            "Оценка веса блюда (estimated_weight_g) должна быть максимально реалистичной, логичной и ПОСТОЯННОЙ. "
+            "Если на фотографии одно и то же блюдо, ты должен выдать абсолютно идентичный вес и КБЖУ. "
+            "Ориентируйся на стандартные размеры посуды (диаметр тарелки, глубина суповой миски) и средний вес ингредиентов."
         )
         
         response = client.models.generate_content(
@@ -783,57 +912,68 @@ async def analyze_food(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         if not result:
             raise ValueError("Не удалось получить структурированный ответ от нейросети.")
             
-        # Log the meal
-        await log_meal_data(
-            user_id, context,
-            food_name=result.dish_name,
-            calories=result.calories,
-            protein=result.protein,
-            fat=result.fat,
-            carbs=result.carbs
-        )
+        # Store in user session as pending meal
+        context.user_data['pending_meal'] = {
+            'food_name': result.dish_name,
+            'calories': result.calories,
+            'protein': result.protein,
+            'fat': result.fat,
+            'carbs': result.carbs
+        }
         
         # Build response text
+        dish_lbl = "Блюдо" if lang == 'ru' else "Taom"
+        weight_lbl = "Примерный вес" if lang == 'ru' else "Taxminiy vazn"
+        kbju_lbl = "КБЖУ порции" if lang == 'ru' else "Porsiyaning KBJU ko'rsatkichlari"
+        cal_lbl = "Калории" if lang == 'ru' else "Kaloriya"
+        prot_lbl = "Белки" if lang == 'ru' else "Oqsillar"
+        fat_lbl = "Жиры" if lang == 'ru' else "Yog'lar"
+        carb_lbl = "Углеводы" if lang == 'ru' else "Uglevodlar"
+        review_lbl = "Совет диетолога" if lang == 'ru' else "Parhezshunos maslahati"
+        
         result_text = (
-            f"🍳 **Блюдо**: {result.dish_name}\n"
-            f"⚖️ **Примерный вес**: {result.estimated_weight_g} г\n\n"
-            f"📊 **КБЖУ порции**:\n"
-            f"• Калории: **{result.calories} ккал**\n"
-            f"• Белки: **{result.protein:.1f} г**\n"
-            f"• Жиры: **{result.fat:.1f} г**\n"
-            f"• Углеводы: **{result.carbs:.1f} г**\n\n"
-            f"🍎 **Совет диетолога**:\n{result.nutritionist_review}\n\n"
-            f"✅ Блюдо успешно добавлено в ваш дневник питания за сегодня!"
+            f"🍳 **{dish_lbl}**: {result.dish_name}\n"
+            f"⚖️ **{weight_lbl}**: {result.estimated_weight_g} г\n\n"
+            f"📊 **{kbju_lbl}**:\n"
+            f"• {cal_lbl}: **{result.calories} ккал**\n"
+            f"• {prot_lbl}: **{result.protein:.1f} г**\n"
+            f"• {fat_lbl}: **{result.fat:.1f} г**\n"
+            f"• {carb_lbl}: **{result.carbs:.1f} г**\n\n"
+            f"🍎 **{review_lbl}**:\n{result.nutritionist_review}\n\n"
+            f"❓ {TEXTS[lang]['confirm_log']}"
         )
         
+        # Buttons for logging confirmation
+        keyboard = [
+            [
+                InlineKeyboardButton(TEXTS[lang]['btn_yes'], callback_data="confirm_log_yes"),
+                InlineKeyboardButton(TEXTS[lang]['btn_no'], callback_data="confirm_log_no")
+            ]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
         try:
-            await status_message.edit_text(result_text, parse_mode="Markdown")
+            await status_message.edit_text(result_text, parse_mode="Markdown", reply_markup=reply_markup)
         except Exception as markdown_err:
             logger.warning(f"Failed to send message with Markdown formatting: {markdown_err}")
-            await status_message.edit_text(result_text)
+            await status_message.edit_text(result_text, reply_markup=reply_markup)
             
     except APIError as e:
         logger.error(f"Gemini API Error: {e}")
-        await status_message.edit_text(
-            "Произошла ошибка при обращении к ИИ API. Пожалуйста, попробуйте еще раз позже. 😢"
-        )
+        await status_message.edit_text(TEXTS[lang]['err_api'])
     except Exception as e:
         logger.error(f"Unexpected error: {e}", exc_info=True)
-        await status_message.edit_text(
-            "Не удалось обработать изображение или произошла ошибка. Пожалуйста, попробуйте еще раз. 🛠"
-        )
+        await status_message.edit_text(TEXTS[lang]['err_unexpected'])
 
 
 async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Analyze food from a text description and add it to the daily diary."""
+    """Analyze food from a text description and ask if it should be added to the daily diary."""
     user_id = update.effective_user.id
     profile = await get_user_profile_data(user_id, context)
     
     if not profile:
-        await update.message.reply_text(
-            "Привет! Для начала работы со мной, пожалуйста, заполните ваш профиль. "
-            "Введите команду /start"
-        )
+        lang = context.user_data.get('language', 'ru')
+        await update.message.reply_text(TEXTS[lang]['profile_missing'])
         return
         
     user_text = update.message.text.strip()
@@ -841,7 +981,8 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     if user_text.startswith('/'):
         return
         
-    status_message = await update.message.reply_text("Секунду, анализирую описание еды... 📝")
+    lang = profile.get('language', 'ru')
+    status_message = await update.message.reply_text(TEXTS[lang]['analyzing_text'])
     
     try:
         # Initialize Google GenAI client
@@ -860,11 +1001,14 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         consumed_fat = sum(m['fat'] for m in meals_today)
         consumed_carbs = sum(m['carbs'] for m in meals_today)
         
+        # Set temperature to 0.0 for deterministic food and weight estimation
         config = GenerateContentConfig(
             response_mime_type="application/json",
             response_schema=FoodAnalysis,
-            temperature=0.2,
+            temperature=0.0,
         )
+        
+        target_lang_str = "русском языке" if lang == 'ru' else "узбекском языке (o'zbek tilida)"
         
         prompt = (
             "Вы профессиональный диетолог.\n"
@@ -874,7 +1018,11 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             f"Уже съедено сегодня: калории {consumed_calories} ккал, "
             f"белки {consumed_protein:.1f} г, жиры {consumed_fat:.1f} г, углеводы {consumed_carbs:.1f} г.\n\n"
             f"Пользователь сообщил, что съел следующее: \"{user_text}\"\n"
-            "Твоя задача — оценить состав и вес описанных продуктов, рассчитать их КБЖУ и написать короткий отзыв диетолога на русском языке."
+            "Твоя задача — оценить состав и вес описанных продуктов, рассчитать их КБЖУ и написать короткий отзыв диетолога.\n"
+            f"Всё текстовое описание (dish_name и nutritionist_review) должно быть написано СТРОГО на {target_lang_str}.\n"
+            "В nutritionist_review напиши коротко и по делу: как это вписывается в дневной лимит, подходит ли для цели пользователя, и дай совет.\n\n"
+            "ВАЖНОЕ ТРЕБОВАНИЕ К ОЦЕНКЕ ВЕСА:\n"
+            "Оценка веса блюда (estimated_weight_g) должна быть максимально точной, логичной и воспроизводимой."
         )
         
         response = client.models.generate_content(
@@ -888,37 +1036,106 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         if not result:
             raise ValueError("Не удалось получить структурированный ответ от нейросети.")
             
-        # Log the meal
-        await log_meal_data(
-            user_id, context, 
-            food_name=result.dish_name, 
-            calories=result.calories, 
-            protein=result.protein, 
-            fat=result.fat, 
-            carbs=result.carbs
-        )
+        # Store in user session as pending meal
+        context.user_data['pending_meal'] = {
+            'food_name': result.dish_name,
+            'calories': result.calories,
+            'protein': result.protein,
+            'fat': result.fat,
+            'carbs': result.carbs
+        }
         
         # Build response text
+        dish_lbl = "Блюдо" if lang == 'ru' else "Taom"
+        weight_lbl = "Примерный вес" if lang == 'ru' else "Taxminiy vazn"
+        kbju_lbl = "КБЖУ порции" if lang == 'ru' else "Porsiyaning KBJU ko'rsatkichlari"
+        cal_lbl = "Калории" if lang == 'ru' else "Kaloriya"
+        prot_lbl = "Белки" if lang == 'ru' else "Oqsillar"
+        fat_lbl = "Жиры" if lang == 'ru' else "Yog'lar"
+        carb_lbl = "Углеводы" if lang == 'ru' else "Uglevodlar"
+        review_lbl = "Совет диетолога" if lang == 'ru' else "Parhezshunos maslahati"
+        
         result_text = (
-            f"📝 **Добавлено в дневник**:\n"
-            f"🍳 **Блюдо**: {result.dish_name}\n"
-            f"⚖️ **Примерный вес**: {result.estimated_weight_g} г\n\n"
-            f"📊 **КБЖУ порции**:\n"
-            f"• Калории: **{result.calories} ккал**\n"
-            f"• Белки: **{result.protein:.1f} г**\n"
-            f"• Жиры: **{result.fat:.1f} г**\n"
-            f"• Углеводы: **{result.carbs:.1f} г**\n\n"
-            f"🍎 **Совет диетолога**:\n{result.nutritionist_review}\n\n"
-            f"✅ Успешно записано в дневник питания за сегодня!"
+            f"📝 **{dish_lbl}**: {result.dish_name}\n"
+            f"⚖️ **{weight_lbl}**: {result.estimated_weight_g} г\n\n"
+            f"📊 **{kbju_lbl}**:\n"
+            f"• {cal_lbl}: **{result.calories} ккал**\n"
+            f"• {prot_lbl}: **{result.protein:.1f} г**\n"
+            f"• {fat_lbl}: **{result.fat:.1f} г**\n"
+            f"• {carb_lbl}: **{result.carbs:.1f} г**\n\n"
+            f"🍎 **{review_lbl}**:\n{result.nutritionist_review}\n\n"
+            f"❓ {TEXTS[lang]['confirm_log']}"
         )
         
-        await status_message.edit_text(result_text, parse_mode="Markdown")
+        # Buttons for logging confirmation
+        keyboard = [
+            [
+                InlineKeyboardButton(TEXTS[lang]['btn_yes'], callback_data="confirm_log_yes"),
+                InlineKeyboardButton(TEXTS[lang]['btn_no'], callback_data="confirm_log_no")
+            ]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        await status_message.edit_text(result_text, parse_mode="Markdown", reply_markup=reply_markup)
         
     except Exception as e:
         logger.error(f"Error in text food analysis: {e}", exc_info=True)
-        await status_message.edit_text(
-            "Не удалось распознать продукты из текстового описания. Попробуйте написать подробнее или пришлите фото. 🛠"
+        await status_message.edit_text(TEXTS[lang]['err_unexpected'])
+
+
+async def confirm_log_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Callback query handler for confirming or canceling meal logging."""
+    query = update.callback_query
+    await query.answer()
+    
+    user_id = update.effective_user.id
+    profile = await get_user_profile_data(user_id, context)
+    lang = profile.get('language', 'ru') if profile else context.user_data.get('language', 'ru')
+    
+    pending_meal = context.user_data.get('pending_meal')
+    if not pending_meal:
+        err_msg = "Нет активного блюда для записи." if lang == 'ru' else "Yozib olish uchun faol taom topilmadi."
+        await query.message.reply_text(err_msg)
+        return
+        
+    action = query.data
+    
+    if action == "confirm_log_yes":
+        # Log the meal to database and context
+        await log_meal_data(
+            user_id, context,
+            food_name=pending_meal['food_name'],
+            calories=pending_meal['calories'],
+            protein=pending_meal['protein'],
+            fat=pending_meal['fat'],
+            carbs=pending_meal['carbs']
         )
+        
+        # Get today's total calories
+        meals_today = await get_today_meals_data(user_id, context)
+        total_calories = sum(m['calories'] for m in meals_today)
+        target_calories = profile.get('target_calories', 2000) if profile else 2000
+        
+        success_text = TEXTS[lang]['meal_logged'].format(
+            dish=pending_meal['food_name'],
+            calories=pending_meal['calories']
+        )
+        
+        # Check if the user reached/exceeded the target limit with this meal
+        prev_total = total_calories - pending_meal['calories']
+        if total_calories >= target_calories and prev_total < target_calories:
+            limit_warning = "\n\n" + TEXTS[lang]['limit_reached'].format(
+                target=target_calories,
+                total=total_calories
+            )
+            success_text += limit_warning
+            
+        await query.message.edit_text(success_text, parse_mode="Markdown")
+    else:
+        await query.message.edit_text(TEXTS[lang]['meal_cancelled'], parse_mode="Markdown")
+        
+    # Clear pending meal details
+    context.user_data.pop('pending_meal', None)
 
 
 def main() -> None:
@@ -949,6 +1166,10 @@ def main() -> None:
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
         states={
+            LANG: [
+                CallbackQueryHandler(get_language),
+                MessageHandler(filters.TEXT & ~filters.COMMAND, remind_click_buttons)
+            ],
             AGE: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_age)],
             HEIGHT: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_height)],
             WEIGHT: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_weight)],
@@ -969,10 +1190,11 @@ def main() -> None:
     )
     application.add_handler(conv_handler)
     
-    # Command and Photo Handlers
+    # Command, Photo and Log Confirmation Handlers
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(CommandHandler("today", today_command))
     application.add_handler(CommandHandler("history", history_command))
+    application.add_handler(CallbackQueryHandler(confirm_log_callback, pattern="^confirm_log_(yes|no)$"))
     application.add_handler(MessageHandler(filters.PHOTO, analyze_food))
     
     # Catch any text messages that are not photos or commands
