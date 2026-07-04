@@ -136,7 +136,7 @@ TEXTS = {
         'analyzing_text': "Bir soniya, taom tavsifini tahlil qilyapman... 📝",
         'profile_missing': "Tahlil qilish uchun avval profilingizni to'ldiring. Boshlash uchun /start buyrug'ini bosing.",
         'err_api': "AI API bilan bog'lanishda xatolik yuz berdi. Iltimos, keyinroq qayta urinib ko'ring. 😢",
-        'err_unexpected': "Rasm yoki tavsifni tahlil qilib bo'lmadi. Iltimos, qayta urinib ko'ring. 🛠",
+        'err_unexpected': "Rasm yoki tavsifni tahlil qiblyapman... Xatolik yuz berdi. 🛠",
         'confirm_log': "Ushbu taomni kunlik kundalikka yozib qo'yaymi?",
         'btn_yes': "Ha, yozish ✍️",
         'btn_no': "Yo'q, kerak emas ❌",
@@ -464,6 +464,9 @@ async def log_meal_data(
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Starts the conversation and asks for the user's language preference."""
+    user = update.effective_user
+    logger.info(f"User {user.first_name} (username: @{user.username}, id: {user.id}) triggered /start.")
+    
     keyboard = [
         [
             InlineKeyboardButton("Русский 🇷🇺", callback_data="lang_ru"),
@@ -487,6 +490,8 @@ async def get_language(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     context.user_data['language'] = lang
     
     user = update.effective_user
+    logger.info(f"User {user.first_name} (id: {user.id}) selected language: {lang}")
+    
     welcome = TEXTS[lang]['start_welcome'].format(name=user.first_name)
     age_prompt = TEXTS[lang]['ask_age']
     
@@ -662,6 +667,14 @@ async def get_goal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         target_calories, target_protein, target_fat, target_carbs
     )
     
+    user = update.effective_user
+    logger.info(
+        f"User {user.first_name} (id: {user_id}) completed profile setup. "
+        f"Gender: {gender}, Age: {age}, Height: {height}, Weight: {weight}, "
+        f"Activity: {activity}, Goal: {goal}. Targets: {target_calories} kcal, "
+        f"P: {target_protein}g, F: {target_fat}g, C: {target_carbs}g."
+    )
+    
     gender_text = TEXTS[lang]['gender_male'] if gender == "male" else TEXTS[lang]['gender_female']
     activity_text = {
         "sedentary": TEXTS[lang]['act_sedentary'],
@@ -693,6 +706,9 @@ async def get_goal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Cancel the profile filling conversation."""
+    user = update.effective_user
+    logger.info(f"User {user.first_name if user else 'unknown'} (id: {user.id if user else 'unknown'}) canceled profile setup.")
+    
     lang = context.user_data.get('language', 'ru')
     msg = update.message if update.message else update.callback_query.message
     await msg.reply_text(TEXTS[lang]['cancel'])
@@ -707,7 +723,10 @@ async def remind_click_buttons(update: Update, context: ContextTypes.DEFAULT_TYP
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Send a message when the command /help is issued."""
-    user_id = update.effective_user.id
+    user = update.effective_user
+    user_id = user.id
+    logger.info(f"User {user.first_name} (id: {user_id}) requested help command.")
+    
     profile = await get_user_profile_data(user_id, context)
     lang = profile.get('language', 'ru') if profile else context.user_data.get('language', 'ru')
     await update.message.reply_text(TEXTS[lang]['help'])
@@ -715,7 +734,10 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
 async def today_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Shows the daily calorie and macronutrient progress."""
-    user_id = update.effective_user.id
+    user = update.effective_user
+    user_id = user.id
+    logger.info(f"User {user.first_name} (id: {user_id}) requested today's diary.")
+    
     profile = await get_user_profile_data(user_id, context)
     
     if not profile:
@@ -768,7 +790,10 @@ async def today_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 
 async def history_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Shows calorie and macronutrient history."""
-    user_id = update.effective_user.id
+    user = update.effective_user
+    user_id = user.id
+    logger.info(f"User {user.first_name} (id: {user_id}) requested 7-day history.")
+    
     profile = await get_user_profile_data(user_id, context)
     
     if not profile:
@@ -840,7 +865,10 @@ class FoodAnalysis(BaseModel):
 
 async def analyze_food(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Download photo and analyze it using the Gemini API based on user parameters."""
-    user_id = update.effective_user.id
+    user = update.effective_user
+    user_id = user.id
+    logger.info(f"User {user.first_name} (id: {user_id}) sent a photo for analysis.")
+    
     profile = await get_user_profile_data(user_id, context)
     
     if not profile:
@@ -968,7 +996,8 @@ async def analyze_food(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
 async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Analyze food from a text description and ask if it should be added to the daily diary."""
-    user_id = update.effective_user.id
+    user = update.effective_user
+    user_id = user.id
     profile = await get_user_profile_data(user_id, context)
     
     if not profile:
@@ -981,6 +1010,8 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     if user_text.startswith('/'):
         return
         
+    logger.info(f"User {user.first_name} (id: {user_id}) sent text food description: '{user_text}'")
+    
     lang = profile.get('language', 'ru')
     status_message = await update.message.reply_text(TEXTS[lang]['analyzing_text'])
     
@@ -1088,7 +1119,8 @@ async def confirm_log_callback(update: Update, context: ContextTypes.DEFAULT_TYP
     query = update.callback_query
     await query.answer()
     
-    user_id = update.effective_user.id
+    user = update.effective_user
+    user_id = user.id
     profile = await get_user_profile_data(user_id, context)
     lang = profile.get('language', 'ru') if profile else context.user_data.get('language', 'ru')
     
@@ -1101,6 +1133,8 @@ async def confirm_log_callback(update: Update, context: ContextTypes.DEFAULT_TYP
     action = query.data
     
     if action == "confirm_log_yes":
+        logger.info(f"User {user.first_name} (id: {user_id}) confirmed logging: '{pending_meal['food_name']}' ({pending_meal['calories']} kcal).")
+        
         # Log the meal to database and context
         await log_meal_data(
             user_id, context,
@@ -1132,6 +1166,7 @@ async def confirm_log_callback(update: Update, context: ContextTypes.DEFAULT_TYP
             
         await query.message.edit_text(success_text, parse_mode="Markdown")
     else:
+        logger.info(f"User {user.first_name} (id: {user_id}) canceled logging: '{pending_meal['food_name']}'.")
         await query.message.edit_text(TEXTS[lang]['meal_cancelled'], parse_mode="Markdown")
         
     # Clear pending meal details
